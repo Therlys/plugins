@@ -57,8 +57,6 @@ public class CameraPlugin implements MethodCallHandler {
   private final FlutterView view;
   private Camera camera;
   private Registrar registrar;
-  // The code to run after requesting camera permissions.
-  private Runnable cameraPermissionContinuation;
   private final OrientationEventListener orientationEventListener;
   private int currentOrientation = ORIENTATION_UNKNOWN;
 
@@ -77,8 +75,6 @@ public class CameraPlugin implements MethodCallHandler {
             currentOrientation = (int) Math.round(i / 90.0) * 90;
           }
         };
-
-    registrar.addRequestPermissionsResultListener(new CameraRequestPermissionsListener());
   }
 
   public static void registerWith(Registrar registrar) {
@@ -222,19 +218,8 @@ public class CameraPlugin implements MethodCallHandler {
     }
   }
 
-  private class CameraRequestPermissionsListener
-      implements PluginRegistry.RequestPermissionsResultListener {
-    @Override
-    public boolean onRequestPermissionsResult(int id, String[] permissions, int[] grantResults) {
-      if (id == CAMERA_REQUEST_ID) {
-        cameraPermissionContinuation.run();
-        return true;
-      }
-      return false;
-    }
-  }
-
   private class Camera {
+
     private final FlutterView.SurfaceTextureEntry textureEntry;
     private CameraDevice cameraDevice;
     private CameraCaptureSession cameraCaptureSession;
@@ -292,35 +277,25 @@ public class CameraPlugin implements MethodCallHandler {
         computeBestCaptureSize(streamConfigurationMap);
         computeBestPreviewAndRecordingSize(streamConfigurationMap, minHeight, captureSize);
 
-        if (cameraPermissionContinuation != null) {
-          result.error("cameraPermission", "Camera permission request ongoing", null);
-        }
-        cameraPermissionContinuation =
-            new Runnable() {
-              @Override
-              public void run() {
-                cameraPermissionContinuation = null;
-                if (!hasCameraPermission()) {
-                  result.error(
-                      "cameraPermission", "MediaRecorderCamera permission not granted", null);
-                  return;
-                }
-                if (enableAudio && !hasAudioPermission()) {
-                  result.error(
-                      "cameraPermission", "MediaRecorderAudio permission not granted", null);
-                  return;
-                }
-                open(result);
-              }
-            };
+
         if (hasCameraPermission() && (!enableAudio || hasAudioPermission())) {
-          cameraPermissionContinuation.run();
+          openCameraIfPermissionsGranted(result);
         } else {
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             final Activity activity = registrar.activity();
             if (activity == null) {
               throw new IllegalStateException("No activity available!");
             }
+            registrar.addRequestPermissionsResultListener(new PluginRegistry.RequestPermissionsResultListener() {
+              @Override
+              public boolean onRequestPermissionsResult(int id, String[] permissions, int[] grantResults) {
+                if (id == CAMERA_REQUEST_ID) {
+                  openCameraIfPermissionsGranted(result);
+                  return true;
+                }
+                return false;
+              }
+            });
 
             activity.requestPermissions(
                 enableAudio
@@ -334,6 +309,20 @@ public class CameraPlugin implements MethodCallHandler {
       } catch (IllegalArgumentException e) {
         result.error("IllegalArgumentException", e.getMessage(), null);
       }
+    }
+
+    private void openCameraIfPermissionsGranted(final Result result){
+      if (!hasCameraPermission()) {
+        result.error(
+                "cameraPermission", "MediaRecorderCamera permission not granted", null);
+        return;
+      }
+      if (enableAudio && !hasAudioPermission()) {
+        result.error(
+                "cameraPermission", "MediaRecorderAudio permission not granted", null);
+        return;
+      }
+      open(result);
     }
 
     private void registerEventChannel() {
