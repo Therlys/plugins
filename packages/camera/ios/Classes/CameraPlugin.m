@@ -6,8 +6,8 @@
 
 static FlutterError *getFlutterError(NSError *error) {
   return [FlutterError errorWithCode:[NSString stringWithFormat:@"Error %d", (int)error.code]
-                             message:error.domain
-                             details:error.localizedDescription];
+                             message:error.localizedDescription
+                             details:error.domain];
 }
 
 @interface FLTSavePhotoDelegate : NSObject <AVCapturePhotoCaptureDelegate>
@@ -141,6 +141,7 @@ static FlutterError *getFlutterError(NSError *error) {
 @property(assign, nonatomic) BOOL isRecording;
 @property(assign, nonatomic) BOOL isAudioSetup;
 @property(assign, nonatomic) BOOL isStreamingImages;
+@property(assign, nonatomic) NSString *resolutionPreset;
 @property(nonatomic) CMMotionManager *motionManager;
 - (instancetype)initWithCameraName:(NSString *)cameraName
                   resolutionPreset:(NSString *)resolutionPreset
@@ -171,6 +172,7 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
   self = [super init];
   NSAssert(self, @"super init cannot be nil");
   _enableAudio = enableAudio;
+  _resolutionPreset = resolutionPreset;
   _dispatchQueue = dispatchQueue;
   _captureSession = [[AVCaptureSession alloc] init];
 
@@ -205,8 +207,11 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
   _motionManager = [[CMMotionManager alloc] init];
   [_motionManager startAccelerometerUpdates];
 
-  [self setCaptureSessionPreset:resolutionPreset];
-
+  @try {
+    [self setCaptureSessionPreset:resolutionPreset];
+  } @catch (NSError *e) {
+    *error = e;
+  }
   return self;
 }
 
@@ -220,7 +225,9 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
 
 - (void)captureToFile:(NSString *)path result:(FlutterResult)result {
   AVCapturePhotoSettings *settings = [AVCapturePhotoSettings photoSettings];
-  [settings setHighResolutionPhotoEnabled:YES];
+  if ([_resolutionPreset isEqualToString:@"veryHigh"]) {
+    [settings setHighResolutionPhotoEnabled:YES];
+  }
   [_capturePhotoOutput
       capturePhotoWithSettings:settings
                       delegate:[[FLTSavePhotoDelegate alloc] initWithPath:path
@@ -231,14 +238,25 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
 
 - (void)setCaptureSessionPreset:(NSString *)resolutionPreset {
   int presetIndex;
-  if ([resolutionPreset isEqualToString:@"high"]) {
+  if ([resolutionPreset isEqualToString:@"veryHigh"]) {
     presetIndex = 0;
+  } else if ([resolutionPreset isEqualToString:@"high"]) {
+    presetIndex = 1;
   } else if ([resolutionPreset isEqualToString:@"medium"]) {
     presetIndex = 2;
-  } else {
-    NSAssert([resolutionPreset isEqualToString:@"low"], @"Unknown resolution preset %@",
-             resolutionPreset);
+  } else if ([resolutionPreset isEqualToString:@"low"]) {
     presetIndex = 3;
+  } else if ([resolutionPreset isEqualToString:@"veryLow"]) {
+    presetIndex = 4;
+  } else {
+    NSError *error = [NSError
+        errorWithDomain:NSCocoaErrorDomain
+                   code:NSURLErrorUnknown
+               userInfo:@{
+                 NSLocalizedDescriptionKey :
+                     [NSString stringWithFormat:@"Unknown resolution preset %@", resolutionPreset]
+               }];
+    @throw error;
   }
 
   switch (presetIndex) {
@@ -272,13 +290,20 @@ FourCharCode const videoFormat = kCVPixelFormatType_32BGRA;
         _previewSize = CGSizeMake(352, 288);
         break;
       }
-    default: {
-      NSException *exception = [NSException
-          exceptionWithName:@"NoAvailableCaptureSessionException"
-                     reason:@"No capture session available for current capture session."
-                   userInfo:nil];
-      @throw exception;
-    }
+    default:
+      if ([_captureSession canSetSessionPreset:AVCaptureSessionPresetLow]) {
+        _captureSession.sessionPreset = AVCaptureSessionPresetLow;
+        _previewSize = CGSizeMake(352, 288);
+      } else {
+        NSError *error =
+            [NSError errorWithDomain:NSCocoaErrorDomain
+                                code:NSURLErrorUnknown
+                            userInfo:@{
+                              NSLocalizedDescriptionKey :
+                                  @"No capture session available for current capture session."
+                            }];
+        @throw error;
+      }
   }
 }
 

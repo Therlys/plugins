@@ -1,3 +1,10 @@
+## 0.6.0
+
+* Added 2 new quality presets (veryHigh and veryLow).
+* Now quality presets match on Android and iOS
+* Now quality presets can be used to control image capture quality.
+** NOTE: ** Existing presets have been updated, this will affect the quality of pictures and videos in existing apps.
+
 ## 0.5.2+1
 
 * Fix bug that prevented video recording with audio.

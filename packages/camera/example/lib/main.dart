@@ -256,6 +256,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     if (controller != null) {
       await controller.dispose();
     }
+
     controller = CameraController(
       cameraDescription,
       ResolutionPreset.high,
