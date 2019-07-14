@@ -56,7 +56,7 @@ public class QuickActionsPlugin implements MethodCallHandler {
     }
     Context context = registrar.context();
     ShortcutManager shortcutManager =
-      (ShortcutManager) context.getSystemService(Context.SHORTCUT_SERVICE);
+        (ShortcutManager) context.getSystemService(Context.SHORTCUT_SERVICE);
     switch (call.method) {
       case "setShortcutItems":
         List<Map<String, String>> serializedShortcuts = call.arguments();
@@ -84,7 +84,7 @@ public class QuickActionsPlugin implements MethodCallHandler {
       ShortcutInfo.Builder shortcutBuilder = new ShortcutInfo.Builder(context, type);
       if (icon != null) {
         int resourceId =
-          context.getResources().getIdentifier(icon, "drawable", context.getPackageName());
+            context.getResources().getIdentifier(icon, "drawable", context.getPackageName());
         if (resourceId > 0) {
           shortcutBuilder.setIcon(Icon.createWithResource(context, resourceId));
         }
