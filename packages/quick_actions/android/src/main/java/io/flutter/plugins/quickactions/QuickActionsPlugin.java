@@ -5,14 +5,13 @@
 package io.flutter.plugins.quickactions;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.drawable.Icon;
 import android.os.Build;
-import android.os.Bundle;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 /** QuickActionsPlugin */
-@SuppressWarnings("unchecked")
 public class QuickActionsPlugin implements MethodCallHandler {
   private final Registrar registrar;
 
@@ -58,7 +56,7 @@ public class QuickActionsPlugin implements MethodCallHandler {
     }
     Context context = registrar.context();
     ShortcutManager shortcutManager =
-        (ShortcutManager) context.getSystemService(Context.SHORTCUT_SERVICE);
+      (ShortcutManager) context.getSystemService(Context.SHORTCUT_SERVICE);
     switch (call.method) {
       case "setShortcutItems":
         List<Map<String, String>> serializedShortcuts = call.arguments();
@@ -86,39 +84,22 @@ public class QuickActionsPlugin implements MethodCallHandler {
       ShortcutInfo.Builder shortcutBuilder = new ShortcutInfo.Builder(context, type);
       if (icon != null) {
         int resourceId =
-            context.getResources().getIdentifier(icon, "drawable", context.getPackageName());
+          context.getResources().getIdentifier(icon, "drawable", context.getPackageName());
         if (resourceId > 0) {
           shortcutBuilder.setIcon(Icon.createWithResource(context, resourceId));
         }
       }
       shortcutBuilder.setLongLabel(title);
       shortcutBuilder.setShortLabel(title);
-      Intent intent = new Intent(context, ShortcutHandlerActivity.class);
-      intent.setAction("plugins.flutter.io/quick_action");
-      intent.putExtra("type", type);
+      PackageManager pm = context.getPackageManager();
+      Intent intent = pm.getLaunchIntentForPackage(context.getPackageName());
+      intent.setAction(Intent.ACTION_RUN);
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+      intent.putExtra("route", type);
       shortcutBuilder.setIntent(intent);
       shortcutInfos.add(shortcutBuilder.build());
     }
     return shortcutInfos;
-  }
-
-  /**
-   * Handle the shortcut and immediately closes the activity.
-   *
-   * <p>Needs to be invocable by Android system; hence it is public.
-   */
-  public static class ShortcutHandlerActivity extends Activity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
-      // Get the Intent that started this activity and extract the string
-      Intent intent = getIntent();
-      String type = intent.getStringExtra("type");
-      if (channel != null) {
-        channel.invokeMethod("launch", type);
-      }
-      finish();
-    }
   }
 }

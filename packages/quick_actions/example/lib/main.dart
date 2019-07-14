@@ -15,10 +15,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      onGenerateRoute: (settings) {
+        return MaterialPageRoute<Widget>(builder: (context) {
+          return MyHomePage(title: settings.name);
+        });
+      },
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
@@ -37,12 +41,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     final QuickActions quickActions = QuickActions();
-    quickActions.initialize((String shortcutType) {
-      if (shortcutType == 'action_main') {
-        print('The user tapped on the "Main view" action.');
-      }
-    });
-
     quickActions.setShortcutItems(<ShortcutItem>[
       const ShortcutItem(
           type: 'action_main', localizedTitle: 'Main view', icon: 'AppIcon'),
@@ -53,12 +51,26 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Plugin example app'),
+        title: Text(widget.title),
       ),
-      body: const Center(
-          child: Text('On home screen, long press the icon to '
-              'get Main view action. Tapping on that action should print '
-              'a message to the log.')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text('On home screen, long press the icon to '
+                'get Main view action. Tapping on that action should print '
+                'a message to the log.'),
+            const SizedBox(
+              height: 20,
+            ),
+            Text(
+              'Current Route: \n${widget.title}',
+              style: Theme.of(context).textTheme.display1,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

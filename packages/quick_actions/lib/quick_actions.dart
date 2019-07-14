@@ -10,11 +10,6 @@ import 'package:meta/meta.dart';
 const MethodChannel _kChannel =
     MethodChannel('plugins.flutter.io/quick_actions');
 
-/// Handler for a quick action launch event.
-///
-/// The argument [type] corresponds to the [ShortcutItem]'s field.
-typedef void QuickActionHandler(String type);
-
 /// Home screen quick-action shortcut item.
 class ShortcutItem {
   const ShortcutItem({
@@ -45,16 +40,6 @@ class QuickActions {
       QuickActions.withMethodChannel(_kChannel);
 
   final MethodChannel channel;
-
-  /// Initializes this plugin.
-  ///
-  /// Call this once before any further interaction with the the plugin.
-  void initialize(QuickActionHandler handler) {
-    channel.setMethodCallHandler((MethodCall call) async {
-      assert(call.method == 'launch');
-      handler(call.arguments);
-    });
-  }
 
   /// Sets the [ShortcutItem]s to become the app's quick actions.
   Future<void> setShortcutItems(List<ShortcutItem> items) async {

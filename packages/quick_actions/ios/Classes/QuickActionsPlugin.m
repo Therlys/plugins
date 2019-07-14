@@ -41,6 +41,7 @@ static NSString *const CHANNEL_NAME = @"plugins.flutter.io/quick_actions";
 - (BOOL)application:(UIApplication *)application
     performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem
                completionHandler:(void (^)(BOOL succeeded))completionHandler {
+   // TODO: Find a way to forward the 'type' as a route to flutter router.
   [self.channel invokeMethod:@"launch" arguments:shortcutItem.type];
   return YES;
 }
