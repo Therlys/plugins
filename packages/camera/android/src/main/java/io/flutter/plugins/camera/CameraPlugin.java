@@ -4,7 +4,6 @@ import static android.view.OrientationEventListener.ORIENTATION_UNKNOWN;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
@@ -23,7 +22,6 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.os.Bundle;
 import android.util.Size;
 import android.view.OrientationEventListener;
 import android.view.Surface;
@@ -48,7 +46,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 public class CameraPlugin implements MethodCallHandler {
 
@@ -81,7 +78,6 @@ public class CameraPlugin implements MethodCallHandler {
         };
 
     registrar.addRequestPermissionsResultListener(new CameraRequestPermissionsListener());
-
   }
 
   public static void registerWith(Registrar registrar) {
