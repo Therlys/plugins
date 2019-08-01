@@ -41,6 +41,7 @@ class QuickActions {
 
   final MethodChannel channel;
 
+
   /// Sets the [ShortcutItem]s to become the app's quick actions.
   Future<void> setShortcutItems(List<ShortcutItem> items) async {
     final List<Map<String, String>> itemsList =

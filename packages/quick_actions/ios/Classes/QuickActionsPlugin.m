@@ -26,7 +26,9 @@ static NSString *const CHANNEL_NAME = @"plugins.flutter.io/quick_actions";
     setShortcutItems(call.arguments);
     result(nil);
   } else if ([call.method isEqualToString:@"clearShortcutItems"]) {
-    [UIApplication sharedApplication].shortcutItems = @[];
+      if (@available(iOS 9.0, *)) {
+          [UIApplication sharedApplication].shortcutItems = @[];
+      }
     result(nil);
   } else {
     result(FlutterMethodNotImplemented);
@@ -40,8 +42,7 @@ static NSString *const CHANNEL_NAME = @"plugins.flutter.io/quick_actions";
 
 - (BOOL)application:(UIApplication *)application
     performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem
-               completionHandler:(void (^)(BOOL succeeded))completionHandler {
-  // TODO: Find a way to forward the 'type' as a route to flutter router.
+  completionHandler:(void (^)(BOOL succeeded))completionHandler  API_AVAILABLE(ios(9.0)){
   [self.channel invokeMethod:@"launch" arguments:shortcutItem.type];
   return YES;
 }
@@ -52,13 +53,19 @@ static void setShortcutItems(NSArray *items) {
   NSMutableArray *newShortcuts = [[NSMutableArray alloc] init];
 
   for (id item in items) {
-    UIApplicationShortcutItem *shortcut = deserializeShortcutItem(item);
-    [newShortcuts addObject:shortcut];
+      if (@available(iOS 9.0, *)) {
+          UIApplicationShortcutItem *shortcut = deserializeShortcutItem(item);
+          [newShortcuts addObject:shortcut];
+      }
+    
   }
 
-  [UIApplication sharedApplication].shortcutItems = newShortcuts;
+    if (@available(iOS 9.0, *)) {
+        [UIApplication sharedApplication].shortcutItems = newShortcuts;
+    }
 }
 
+API_AVAILABLE(ios(9.0))
 static UIApplicationShortcutItem *deserializeShortcutItem(NSDictionary *serialized) {
   UIApplicationShortcutIcon *icon =
       [serialized[@"icon"] isKindOfClass:[NSNull class]]

@@ -54,5 +54,6 @@ void main() {
         isMethodCall('clearShortcutItems', arguments: null),
       ],
     );
+    log.clear();
   });
 }

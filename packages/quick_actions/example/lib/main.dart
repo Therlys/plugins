@@ -10,11 +10,9 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
       onGenerateRoute: (settings) {
         return MaterialPageRoute<Widget>(builder: (context) {
           return MyHomePage(title: settings.name);
@@ -23,27 +21,42 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      title: 'Flutter Quick Actions Demo',
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
   final String title;
+  MyHomePage({Key key, this.title}) : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+
   @override
   void initState() {
     super.initState();
+
     final QuickActions quickActions = QuickActions();
+
     quickActions.setShortcutItems(<ShortcutItem>[
+      // NOTE: This first action icon will only work on iOS.
+      // In a real world project keep the same file name for both platforms.
       const ShortcutItem(
-          type: 'action_main', localizedTitle: 'Main view', icon: 'AppIcon'),
+        type: 'action_one',
+        localizedTitle: 'Action one',
+        icon: 'AppIcon',
+      ),
+      // NOTE: This second action icon will only work on Android.
+      // In a real world project keep the same file name for both platforms.
+      const ShortcutItem(
+          type: 'action_two',
+          localizedTitle: 'Action two',
+          icon: 'ic_launcher'),
     ]);
   }
 
@@ -53,23 +66,10 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('On home screen, long press the icon to '
-                'get Main view action. Tapping on that action should print '
-                'a message to the log.'),
-            const SizedBox(
-              height: 20,
-            ),
-            Text(
-              'Current Route: \n${widget.title}',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
+      body: const Center(
+        child: Text('On home screen, long press the app icon to '
+            'get Action one or Action two options. Tapping on that action should  '
+            'set the toolbar title.'),
       ),
     );
   }
